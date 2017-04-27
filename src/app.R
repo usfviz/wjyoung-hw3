@@ -14,7 +14,6 @@ if (!require('GGally')) {
 
 # setwd("~/msan/vis/hw3/src/")
 
-
 format_for_parallel <- function(df) {
   df <- group_by(df, type) %>% summarize(Reach = mean(lifetime_post_total_reach), 
                                          Impressions = mean(lifetime_post_total_impressions),
@@ -73,7 +72,6 @@ normalize_list <- function(l) {
 
 
 plot_heatmap <- function(df) {
-  
   df %>% 
     ggvis(~post_weekday, ~post_hour) %>% 
     layer_rects(width = band(), height = band(), 
@@ -83,7 +81,8 @@ plot_heatmap <- function(df) {
     add_legend("fill", title = "Scale") %>%
     scale_nominal("x", padding = 0, points = FALSE) %>%
     scale_nominal("y", padding = 0, points = FALSE) %>%
-    add_tooltip(hover_heat, "hover") %>%
+    add_axis('x', title = 'Weekday') %>%
+    add_axis('y', title = 'Hour of Day') %>%
     bind_shiny("heat", "p_ui")
 }
 
@@ -92,25 +91,21 @@ plot_parallel <- function(df) {
   format_for_parallel(df) %>% 
     ggvis(~variable, ~value, stroke = ~type, strokeWidth := 5) %>% 
     layer_lines() %>%
-    add_tooltip(hover_parallel, "hover") %>%
+    add_axis('x', title = 'Feature') %>%
+    add_axis('y', title = 'Proportion') %>%
+    add_legend("stroke", title = "Post Type") %>%
     bind_shiny("parallel", "p_ui")
 }
 
 
-hover_heat <- function(x) {
-  paste(x$value)
-}
-
-
 hover_parallel <- function(x) {
-  paste(x$Reach)
+  paste(x$value)
 }
 
 
 server <- function(..., session, output) {
   fb_df <- load_fb()
   plot_heatmap(fb_df)
-  # plot_scatter_matrix(fb_df)
   output$scatter_matrix <- renderPlot(
     ggpairs(fb_df[, c(8, 9, 10, 11)], colour="gray20") 
   ) 
